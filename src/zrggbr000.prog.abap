@@ -4091,3 +4091,34 @@ FORM z024 USING b_result.
   ENDIF.
 
 ENDFORM.
+
+
+*&---------------------------------------------------------------------*
+*&      Form  Z025
+*&---------------------------------------------------------------------*
+*   Beacon User Exit Validation
+*----------------------------------------------------------------------*
+FORM z025_new USING b_result.
+
+  DATA : rt_hkont TYPE RANGE OF hkont.
+
+*** validation to post a document only with the Profit center which is mapped against the bank GL in FAGL3KEH transaction.
+  IF bseg-prctr IS NOT INITIAL.
+
+*** Compare the Profit center and GL account with FAGL_T8A30
+    SELECT
+      SINGLE
+      bukrs,
+      konto_von,
+      konto_bis,
+      prctr FROM fagl_t8a30
+      INTO @DATA(ls_t8a30) WHERE bukrs     EQ @bkpf-bukrs AND
+                                 konto_von LE @bseg-hkont AND
+                                 konto_bis GE @bseg-hkont.
+*** if the Profit center not mapped against that GL then throw error message
+    IF sy-subrc = 0 AND ls_t8a30-prctr NE bseg-prctr.
+      MESSAGE e373(zgtfi_msg).
+    ENDIF.
+  ENDIF.
+
+ENDFORM.
